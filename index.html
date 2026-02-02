@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-TW" xml:lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>在國網中心（TWCC）部署 MiniMax M2.1 完整操作指南</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">在國網中心（TWCC）部署 MiniMax M2.1 完整操作指南</h1>
+</header>
+<h1
+id="在國網中心twcc部署-minimax-m2.1-完整操作指南">在國網中心（TWCC）部署
+MiniMax M2.1 完整操作指南</h1>
+<p>本指南假設您從未使用過國網中心（NCHC）或 TWCC
+平台，將從帳號申請開始，一步一步帶您完成 MiniMax M2.1 模型的部署。</p>
+<hr />
+<h2 id="一模型概覽">一、模型概覽</h2>
+<p>MiniMax M2.1 是 230B 參數的 MoE（Mixture of
+Experts）模型，推理時僅激活 10B 參數。權重以 FP8 精度發布，約
+220GB。</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>GPU 配置</th>
+<th>總 VRAM</th>
+<th>最大 context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基本</td>
+<td>4x H100/H200 (80-96GB)</td>
+<td>~320-384 GB</td>
+<td>400K tokens</td>
+</tr>
+<tr>
+<td>完整</td>
+<td>8x H100/H200</td>
+<td>~640-768 GB</td>
+<td>3M tokens</td>
+</tr>
+</tbody>
+</table>
+<p>每個序列的最大 context length 為 196K tokens。</p>
+<hr />
+<h2 id="二註冊-iservice-帳號">二、註冊 iService 帳號</h2>
+<p>所有國網中心的服務都需要透過 iService 帳號使用。</p>
+<h3 id="步驟-1開啟-iservice-網站">步驟 1：開啟 iService 網站</h3>
+<ol type="1">
+<li>打開瀏覽器，前往 https://iservice.nchc.org.tw/</li>
+<li>點擊頁面右上角的<strong>「註冊」</strong>按鈕</li>
+</ol>
+<h3 id="步驟-2同意使用條款">步驟 2：同意使用條款</h3>
+<ol type="1">
+<li>頁面會顯示「個人資料與權益義務聲明」</li>
+<li>捲動到頁面最底部</li>
+<li>點擊<strong>「我同意」</strong>按鈕</li>
+</ol>
+<h3 id="步驟-3填寫註冊表單">步驟 3：填寫註冊表單</h3>
+<p>表單分為三個區塊：</p>
+<p><strong>區塊一：平台帳號/密碼設定</strong></p>
+<ul>
+<li>自訂一個登入用的帳號名稱（用於登入 iService 網站）</li>
+<li>設定密碼</li>
+</ul>
+<p><strong>區塊二：基本會員資料</strong></p>
+<ul>
+<li>姓名、服務單位、E-mail、手機號碼</li>
+<li>注意：每個手機號碼只能綁定一個帳號</li>
+</ul>
+<p><strong>區塊三：主機帳號/密碼設定</strong></p>
+<ul>
+<li>這是另一組帳密，專門用於 SSH 連線到計算節點</li>
+<li>請務必記住這組帳密，之後連線時會用到</li>
+</ul>
+<h3 id="步驟-4完成驗證">步驟 4：完成驗證</h3>
+<ol type="1">
+<li>系統會寄送驗證信到您填寫的 E-mail，點擊信中連結完成 E-mail 驗證</li>
+<li>系統會發送簡訊驗證碼到您的手機，輸入驗證碼完成手機驗證</li>
+</ol>
+<h3 id="步驟-5設定-otp-裝置">步驟 5：設定 OTP 裝置</h3>
+<p>註冊完成並登入 iService 後：</p>
+<ol type="1">
+<li>點擊上方選單的<strong>「會員中心」</strong></li>
+<li>點擊左側選單的<strong>「主機帳號資訊」</strong></li>
+<li>點擊<strong>「建立 OTP 裝置」</strong></li>
+<li>在手機上安裝 OTP App（例如 Google Authenticator 或 Microsoft
+Authenticator）</li>
+<li>用 OTP App 掃描畫面上的 QR Code</li>
+<li>輸入 App 顯示的六位數驗證碼完成綁定</li>
+</ol>
+<blockquote>
+<p>OTP 在之後用 SSH 連線到計算節點時會需要。</p>
+</blockquote>
+<hr />
+<h2 id="三申請計畫取得算力額度">三、申請計畫（取得算力額度）</h2>
+<p>您必須有一個核准的計畫（project），才能使用 TWCC 的 GPU 資源。</p>
+<h3 id="步驟-1建立新計畫">步驟 1：建立新計畫</h3>
+<ol type="1">
+<li>登入 iService（https://iservice.nchc.org.tw/）</li>
+<li>點擊上方選單的<strong>「會員中心」</strong></li>
+<li>點擊左側選單的<strong>「計畫管理」</strong> →
+<strong>「我的計畫」</strong></li>
+<li>點擊右上角的<strong>「新增計畫」</strong>按鈕</li>
+</ol>
+<h3 id="步驟-2選擇計畫類型">步驟 2：選擇計畫類型</h3>
+<p>依您的身份選擇：</p>
+<ul>
+<li><strong>科技部/國科會計畫</strong>：需上傳核定書</li>
+<li><strong>學界計畫</strong>：大學、研究機構人員</li>
+<li><strong>政府機關計畫</strong></li>
+<li><strong>企業/個人計畫</strong></li>
+</ul>
+<h3 id="步驟-3填寫計畫資訊">步驟 3：填寫計畫資訊</h3>
+<ul>
+<li>計畫名稱、期間、用途說明</li>
+<li>上傳所需文件（如國科會核定書、學校在學證明等）</li>
+<li>點擊<strong>「送出」</strong></li>
+</ul>
+<h3 id="步驟-4等待審核">步驟 4：等待審核</h3>
+<ul>
+<li>審核通過後會收到 E-mail 通知</li>
+<li>通過後需至計畫頁面進行<strong>額度儲值</strong>（購買 GPU
+小時數）</li>
+</ul>
+<h3 id="步驟-5儲值額度">步驟 5：儲值額度</h3>
+<ol type="1">
+<li>在 iService 的<strong>「我的計畫」</strong>中找到已核准的計畫</li>
+<li>點擊進入計畫詳情</li>
+<li>進行額度儲值（wallet top-up）</li>
+</ol>
+<h3 id="費用參考">費用參考</h3>
+<p><strong>Nano 5 — H100 GPU：</strong></p>
+<table>
+<thead>
+<tr>
+<th>使用者類型</th>
+<th>費率（NTD/GPU 小時）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>國科會計畫</td>
+<td>25</td>
+</tr>
+<tr>
+<td>學界計畫</td>
+<td>50</td>
+</tr>
+<tr>
+<td>政府/法人</td>
+<td>50</td>
+</tr>
+<tr>
+<td>企業/個人</td>
+<td>120</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Nano 5 — H200 GPU：</strong></p>
+<table>
+<thead>
+<tr>
+<th>使用者類型</th>
+<th>費率（NTD/GPU 小時）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>國科會計畫</td>
+<td>30</td>
+</tr>
+<tr>
+<td>學界計畫</td>
+<td>60</td>
+</tr>
+<tr>
+<td>政府/法人</td>
+<td>60</td>
+</tr>
+<tr>
+<td>企業/個人</td>
+<td>150</td>
+</tr>
+</tbody>
+</table>
+<p>GPU 小時 = GPU 數量 x 執行小時數。例如使用 4 片 H100 跑 10 小時 = 40
+GPU 小時。</p>
+<hr />
+<h2 id="四登入-twcc-並認識環境">四、登入 TWCC 並認識環境</h2>
+<h3 id="步驟-1登入-twcc">步驟 1：登入 TWCC</h3>
+<ol type="1">
+<li>打開瀏覽器，前往 https://www.twcc.ai/</li>
+<li>點擊右上角的<strong>「登入」</strong></li>
+<li>使用 iService 帳號密碼登入</li>
+</ol>
+<h3 id="步驟-2認識主要服務">步驟 2：認識主要服務</h3>
+<p>登入後左側會看到服務選單，與本次部署相關的有：</p>
+<table>
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr>
+<th>服務名稱</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>開發型容器（CCS）</td>
+<td>提供 GPU 的互動式容器，有 SSH 和 Jupyter，適合長期運行</td>
+</tr>
+<tr>
+<td>高速運算任務（HPC Job）</td>
+<td>透過 Slurm 提交批次任務</td>
+</tr>
+<tr>
+<td>高速檔案系統（HFS）</td>
+<td>高速儲存空間，容器和 HPC 節點共用</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="五方案選擇">五、方案選擇</h2>
+<p>部署 MiniMax M2.1 有兩種主要方案：</p>
+<h3 id="方案-a開發型容器ccs-適合測試與開發">方案 A：開發型容器（CCS）—
+適合測試與開發</h3>
+<ul>
+<li>優點：容器建立後持續運行、有 SSH 存取、操作直觀</li>
+<li>缺點：只有 V100 GPU（VRAM 32GB），無法跑 MiniMax M2.1（需要 320GB+
+VRAM）</li>
+<li>結論：<strong>不適用</strong>，VRAM 不足</li>
+</ul>
+<h3 id="方案-bnano-5-hpcslurm-必須使用此方案">方案 B：Nano 5
+HPC（Slurm）— 必須使用此方案</h3>
+<ul>
+<li>優點：配備 H100 80GB / H200 GPU，可申請 4~8 片，VRAM 足夠</li>
+<li>缺點：批次任務有時間限制（通常最長 4 天），需要 CLI 操作</li>
+<li>結論：<strong>唯一可行方案</strong></li>
+</ul>
+<p>以下步驟以 <strong>Nano 5 HPC + Slurm</strong> 為主。</p>
+<hr />
+<h2 id="六連線到國網中心登入節點">六、連線到國網中心登入節點</h2>
+<h3 id="步驟-1開啟終端機">步驟 1：開啟終端機</h3>
+<ul>
+<li><strong>macOS</strong>：按 <code>Cmd + 空白鍵</code> 打開
+Spotlight，輸入 <code>Terminal</code>（終端機），按 Enter</li>
+<li><strong>Windows</strong>：按 <code>Win + R</code>，輸入
+<code>cmd</code> 或使用 Windows Terminal</li>
+<li><strong>Linux</strong>：按 <code>Ctrl + Alt + T</code></li>
+</ul>
+<h3 id="步驟-2ssh-連線">步驟 2：SSH 連線</h3>
+<p>在終端機輸入以下指令（請替換 <code>&lt;主機帳號&gt;</code> 為您在
+iService 註冊時設定的主機帳號）：</p>
+<pre><code>ssh &lt;主機帳號&gt;@ln01.twcc.ai</code></pre>
+<p>系統會依序要求您輸入：</p>
+<ol type="1">
+<li><strong>主機密碼</strong>：輸入您在 iService
+設定的主機密碼（輸入時畫面不會顯示任何字元，這是正常的）</li>
+<li><strong>OTP 驗證碼</strong>：打開手機上的 OTP App（如 Google
+Authenticator），輸入當前顯示的六位數驗證碼</li>
+</ol>
+<blockquote>
+<p>如果連線被拒絕，可能需要確認正確的登入節點位址。請至 iService 的 Nano
+5 服務頁面查看最新的登入節點主機名稱。</p>
+</blockquote>
+<h3 id="步驟-3確認登入成功">步驟 3：確認登入成功</h3>
+<p>成功登入後，您會看到類似以下的提示符號：</p>
+<pre><code>[&lt;主機帳號&gt;@ln01 ~]$</code></pre>
+<p>此時您已經在國網中心的登入節點上了。</p>
+<hr />
+<h2 id="七認識目錄結構">七、認識目錄結構</h2>
+<p>登入後，您有兩個主要目錄：</p>
+<table>
+<thead>
+<tr>
+<th>路徑</th>
+<th>用途</th>
+<th>預設容量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/home/&lt;主機帳號&gt;/</code></td>
+<td>個人家目錄，放設定檔和小檔案</td>
+<td>100 GB</td>
+</tr>
+<tr>
+<td><code>/work/&lt;主機帳號&gt;/</code></td>
+<td>工作目錄，放模型權重和大型資料</td>
+<td>100 GB</td>
+</tr>
+</tbody>
+</table>
+<p>MiniMax M2.1 模型約 220GB，<strong>超過預設的 100GB
+限制</strong>。您需要先到 iService 申請擴充 <code>/work</code>
+的容量：</p>
+<ol type="1">
+<li>回到 iService 網站</li>
+<li>點擊<strong>「會員中心」</strong> → <strong>「HFS
+儲存管理」</strong></li>
+<li>申請將 <code>/work</code> 容量擴充到至少
+<strong>300GB</strong>（預留空間給模型和虛擬環境）</li>
+</ol>
+<hr />
+<h2 id="八準備-python-環境">八、準備 Python 環境</h2>
+<p>在登入節點的終端機中，依序輸入以下指令。</p>
+<h3 id="步驟-1切換到工作目錄">步驟 1：切換到工作目錄</h3>
+<pre><code>cd /work/&lt;主機帳號&gt;</code></pre>
+<p>將 <code>&lt;主機帳號&gt;</code> 替換為您的主機帳號，例如
+<code>cd /work/u12345</code>。</p>
+<h3 id="步驟-2建立-python-虛擬環境">步驟 2：建立 Python 虛擬環境</h3>
+<p>先確認系統上是否有 <code>uv</code>（一個快速的 Python
+套件管理工具）：</p>
+<pre><code>which uv</code></pre>
+<p>如果沒有，用以下指令安裝：</p>
+<pre><code>curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc</code></pre>
+<p>安裝完成後，建立虛擬環境：</p>
+<pre><code>uv venv</code></pre>
+<p>您會看到類似以下輸出：</p>
+<pre><code>Creating virtual environment at: .venv</code></pre>
+<h3 id="步驟-3啟用虛擬環境">步驟 3：啟用虛擬環境</h3>
+<pre><code>source .venv/bin/activate</code></pre>
+<p>啟用後，您的終端提示符號前方會出現 <code>(.venv)</code>，例如：</p>
+<pre><code>(.venv) [&lt;主機帳號&gt;@ln01 &lt;主機帳號&gt;]$</code></pre>
+<h3 id="步驟-4安裝-vllm-nightly-版本">步驟 4：安裝 vLLM nightly
+版本</h3>
+<p>MiniMax M2.1 需要 vLLM 的 nightly（每日建構）版本：</p>
+<pre><code>uv pip install -U vllm --extra-index-url https://wheels.vllm.ai/nightly</code></pre>
+<p>這會下載並安裝 vLLM
+及其所有依賴套件，過程可能需要幾分鐘。安裝完成後，驗證安裝：</p>
+<pre><code>python -c &quot;import vllm; print(vllm.__version__)&quot;</code></pre>
+<p>應該會印出版本號碼。</p>
+<hr />
+<h2 id="九下載模型">九、下載模型</h2>
+<h3 id="步驟-1安裝-huggingface-cli">步驟 1：安裝 HuggingFace CLI</h3>
+<pre><code>uv pip install huggingface_hub</code></pre>
+<h3 id="步驟-2取得-huggingface-access-token">步驟 2：取得 HuggingFace
+Access Token</h3>
+<p>下載模型需要 HuggingFace 的 Access Token。以下是完整取得步驟：</p>
+<p><strong>2a. 註冊 HuggingFace 帳號（如果還沒有）</strong></p>
+<ol type="1">
+<li>打開瀏覽器，前往 https://huggingface.co/</li>
+<li>點擊右上角的<strong>「Sign Up」</strong></li>
+<li>填寫 Email、密碼，完成註冊</li>
+<li>到信箱收驗證信，點擊連結完成驗證</li>
+</ol>
+<p><strong>2b. 建立 Access Token</strong></p>
+<ol type="1">
+<li>登入 HuggingFace
+後，點擊右上角的<strong>個人頭像</strong>（圓形圖示）</li>
+<li>在下拉選單中點擊<strong>「Settings」</strong></li>
+<li>在左側選單中找到並點擊<strong>「Access
+Tokens」</strong>（位於「Account」分類下方）</li>
+<li>點擊<strong>「Create new token」</strong>按鈕</li>
+<li>在彈出的表單中：
+<ul>
+<li><strong>Token name</strong>：輸入一個名稱方便辨識，例如
+<code>nchc-download</code></li>
+<li><strong>Token
+type</strong>：選擇<strong>「Read」</strong>（唯讀，僅用於下載模型就夠了）</li>
+</ul></li>
+<li>點擊<strong>「Create token」</strong></li>
+<li>畫面會顯示一串以 <code>hf_</code> 開頭的字串，例如
+<code>hf_aBcDeFgHiJkLmNoPqRsTuVwXyZ</code></li>
+<li>點擊 token
+旁邊的<strong>複製圖示</strong>（形似兩個重疊方塊的按鈕）將它複製下來</li>
+<li><strong>請妥善保存此
+token</strong>，關閉頁面後就無法再次查看（只能重新產生）</li>
+</ol>
+<p><strong>2c. 在國網節點上登入 HuggingFace</strong></p>
+<p>回到國網的 SSH 終端機，輸入：</p>
+<pre><code>huggingface-cli login</code></pre>
+<p>畫面會提示：</p>
+<pre><code>Enter your token (input will not be visible):</code></pre>
+<p>將剛才複製的 token 貼上（在終端機中按 <code>Ctrl + Shift + V</code>
+或 macOS 的 <code>Cmd + V</code>），然後按
+Enter。畫面不會顯示任何字元，這是正常的。</p>
+<p>接著會問：</p>
+<pre><code>Add token as git credential? (Y/n)</code></pre>
+<p>輸入 <code>Y</code> 按 Enter。看到 <code>Login successful</code>
+表示登入成功。</p>
+<h3 id="步驟-3下載-minimax-m2.1">步驟 3：下載 MiniMax M2.1</h3>
+<pre><code>huggingface-cli download MiniMaxAI/MiniMax-M2.1 --local-dir /work/&lt;主機帳號&gt;/MiniMax-M2.1</code></pre>
+<p>這個指令會將模型下載到
+<code>/work/&lt;主機帳號&gt;/MiniMax-M2.1</code> 目錄。模型約
+220GB，視網路速度需要一段時間。</p>
+<blockquote>
+<p>提示：國網中心的對外網路頻寬通常很大，下載速度會比一般家用網路快很多。</p>
+</blockquote>
+<h3 id="步驟-4確認下載完成">步驟 4：確認下載完成</h3>
+<pre><code>ls -lh /work/&lt;主機帳號&gt;/MiniMax-M2.1/</code></pre>
+<p>您應該會看到一系列 <code>.safetensors</code> 檔案和
+<code>config.json</code> 等設定檔。</p>
+<hr />
+<h2 id="十撰寫-slurm-任務腳本">十、撰寫 Slurm 任務腳本</h2>
+<p>Slurm
+是國網中心使用的任務排程系統。您需要撰寫一個腳本檔案，告訴系統需要多少資源、要執行什麼指令。</p>
+<h3 id="步驟-1建立腳本檔案">步驟 1：建立腳本檔案</h3>
+<p>在終端機中輸入以下指令來建立腳本檔案：</p>
+<pre><code>vi /work/&lt;主機帳號&gt;/minimax-m2.1.sh</code></pre>
+<blockquote>
+<p><code>vi</code> 是終端機內建的文字編輯器。如果您不熟悉 vi，也可以用
+<code>nano</code>：</p>
+<pre><code>nano /work/&lt;主機帳號&gt;/minimax-m2.1.sh</code></pre>
+</blockquote>
+<h3 id="步驟-2輸入腳本內容">步驟 2：輸入腳本內容</h3>
+<p>如果使用 <code>vi</code>，按 <code>i</code>
+鍵進入編輯模式，然後貼上以下內容：</p>
+<p><strong>4 GPU 配置（基本，建議先用此方案測試）：</strong></p>
+<pre><code>#!/bin/bash
+#SBATCH --account=&lt;計畫編號&gt;
+#SBATCH --job-name=minimax-m2.1
+#SBATCH --partition=gp1d
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH --gres=gpu:4
+#SBATCH --time=24:00:00
+#SBATCH --output=/work/&lt;主機帳號&gt;/minimax-%j.log
+#SBATCH --error=/work/&lt;主機帳號&gt;/minimax-%j.err
+
+cd /work/&lt;主機帳號&gt;
+source .venv/bin/activate
+
+SAFETENSORS_FAST_GPU=1 vllm serve \
+  /work/&lt;主機帳號&gt;/MiniMax-M2.1 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser minimax_m2 \
+  --reasoning-parser minimax_m2_append_think \
+  --host 0.0.0.0 \
+  --port 8000</code></pre>
+<p><strong>請將以下佔位符替換為您的實際值：</strong></p>
+<ul>
+<li><code>&lt;計畫編號&gt;</code>：您的 iService
+計畫編號（在計畫管理頁面可以看到，格式類似 <code>MST123456</code>）</li>
+<li><code>&lt;主機帳號&gt;</code>：您的主機帳號</li>
+</ul>
+<p><strong>8 GPU 配置（完整）：</strong> 將上方的
+<code>--gres=gpu:4</code> 改為 <code>--gres=gpu:8</code>，並將
+<code>--tensor-parallel-size 4</code> 改為
+<code>--tensor-parallel-size 8</code>，同時加上
+<code>--enable_expert_parallel</code>。</p>
+<h3 id="步驟-3儲存檔案">步驟 3：儲存檔案</h3>
+<ul>
+<li>如果使用 <code>vi</code>：按 <code>Esc</code> 鍵退出編輯模式，輸入
+<code>:wq</code> 然後按 Enter（w = write 儲存，q = quit 離開）</li>
+<li>如果使用 <code>nano</code>：按 <code>Ctrl + O</code> 儲存，按 Enter
+確認，再按 <code>Ctrl + X</code> 離開</li>
+</ul>
+<h3 id="腳本參數說明">腳本參數說明</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>參數</th>
+<th>含義</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--account</code></td>
+<td>您的 iService 計畫編號，用於計費</td>
+</tr>
+<tr>
+<td><code>--job-name</code></td>
+<td>任務名稱，顯示在排程佇列中</td>
+</tr>
+<tr>
+<td><code>--partition</code></td>
+<td>排程分區，<code>gp1d</code> 代表 GPU 一天。可用 <code>sinfo</code>
+查看可用分區</td>
+</tr>
+<tr>
+<td><code>--nodes=1</code></td>
+<td>使用 1 個計算節點</td>
+</tr>
+<tr>
+<td><code>--gres=gpu:4</code></td>
+<td>請求 4 片 GPU</td>
+</tr>
+<tr>
+<td><code>--time=24:00:00</code></td>
+<td>最長執行 24 小時</td>
+</tr>
+<tr>
+<td><code>--output</code></td>
+<td>標準輸出（stdout）的記錄檔路徑</td>
+</tr>
+<tr>
+<td><code>--error</code></td>
+<td>標準錯誤（stderr）的記錄檔路徑</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="十一提交任務並監控">十一、提交任務並監控</h2>
+<h3 id="步驟-1查看可用的排程分區">步驟 1：查看可用的排程分區</h3>
+<p>在提交任務前，先看看有哪些分區可用：</p>
+<pre><code>sinfo</code></pre>
+<p>輸出會顯示各分區的名稱、狀態、可用節點數。找到包含 GPU
+的分區名稱（例如 <code>gp1d</code>、<code>gp4d</code> 等），將腳本中的
+<code>--partition</code> 設為對應的分區。</p>
+<h3 id="步驟-2提交任務">步驟 2：提交任務</h3>
+<pre><code>sbatch /work/&lt;主機帳號&gt;/minimax-m2.1.sh</code></pre>
+<p>成功提交後會看到：</p>
+<pre><code>Submitted batch job 1234567</code></pre>
+<p>記下這個 job ID（此處為
+<code>1234567</code>），後續監控和管理會用到。</p>
+<h3 id="步驟-3確認任務狀態">步驟 3：確認任務狀態</h3>
+<pre><code>squeue -u &lt;主機帳號&gt;</code></pre>
+<p>輸出範例：</p>
+<pre><code>JOBID    PARTITION  NAME           USER     ST   TIME   NODES  NODELIST
+1234567  gp1d       minimax-m2.1   u12345   R    0:05   1      gpu01</code></pre>
+<p>各欄位說明：</p>
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>含義</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ST = PD</code></td>
+<td>Pending — 排隊中，等待資源</td>
+</tr>
+<tr>
+<td><code>ST = R</code></td>
+<td>Running — 正在執行</td>
+</tr>
+<tr>
+<td><code>NODELIST</code></td>
+<td>分配到的計算節點名稱（記下來，後續 SSH 需要）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="步驟-4查看執行-log">步驟 4：查看執行 log</h3>
+<pre><code>tail -f /work/&lt;主機帳號&gt;/minimax-*.log</code></pre>
+<p><code>tail -f</code> 會持續顯示 log
+檔案的最新內容。當您看到類似以下訊息時，表示 vLLM 啟動成功：</p>
+<pre><code>INFO:     Uvicorn running on http://0.0.0.0:8000</code></pre>
+<p>按 <code>Ctrl + C</code> 停止查看 log。</p>
+<h3 id="步驟-5取消任務如需要">步驟 5：取消任務（如需要）</h3>
+<pre><code>scancel 1234567</code></pre>
+<p>將 <code>1234567</code> 替換為您的 job ID。</p>
+<hr />
+<h2 id="十二從外部連線到-vllm-服務">十二、從外部連線到 vLLM 服務</h2>
+<p>vLLM 啟動後在計算節點上的 8000 port
+提供服務，但計算節點不直接對外。您需要透過 SSH tunnel 把它連出來。</p>
+<h3 id="方法-assh-tunnel推薦">方法 A：SSH Tunnel（推薦）</h3>
+<h3 id="步驟-1確認計算節點名稱">步驟 1：確認計算節點名稱</h3>
+<p>從 <code>squeue</code> 的 <code>NODELIST</code> 欄位取得，例如
+<code>gpu01</code>。</p>
+<h3 id="步驟-2在您的本機電腦開啟新的終端機視窗">步驟
+2：在您的本機電腦開啟新的終端機視窗</h3>
+<ul>
+<li><strong>macOS</strong>：按 <code>Cmd + N</code>
+開啟新的終端機視窗</li>
+<li><strong>Windows</strong>：開啟新的 cmd 或 PowerShell 視窗</li>
+</ul>
+<h3 id="步驟-3建立兩段式-ssh-tunnel">步驟 3：建立兩段式 SSH Tunnel</h3>
+<p>因為計算節點無法從外部直接連線，需要經過登入節點跳板：</p>
+<pre><code>ssh -L 8000:gpu01:8000 &lt;主機帳號&gt;@ln01.twcc.ai</code></pre>
+<p>將 <code>gpu01</code> 替換為您的實際計算節點名稱。輸入主機密碼和 OTP
+驗證碼。</p>
+<p>連線成功後，<strong>保持此終端機視窗開啟</strong>（不要關閉，關了
+tunnel 就斷了）。</p>
+<h3 id="步驟-4在本機測試連線">步驟 4：在本機測試連線</h3>
+<p>再開一個新的終端機視窗，輸入：</p>
+<pre><code>curl http://localhost:8000/v1/models</code></pre>
+<p>如果看到回傳的 JSON 中包含
+<code>MiniMax-M2.1</code>，表示連線成功。</p>
+<h3 id="方法-btailscale進階">方法 B：Tailscale（進階）</h3>
+<p>如果您需要更穩定的長期連線，可以在計算節點和本機都安裝
+Tailscale，透過 Tailscale 的虛擬網路直接連線。</p>
+<ol type="1">
+<li>在計算節點的任務腳本開頭加入 Tailscale 安裝和啟動指令</li>
+<li>在本機安裝 Tailscale</li>
+<li>兩端登入同一個 Tailscale 帳號</li>
+<li>使用 Tailscale 分配的內網 IP 直接連線</li>
+</ol>
+<hr />
+<h2 id="十三驗證-vllm-服務">十三、驗證 vLLM 服務</h2>
+<p>在本機終端機中（SSH tunnel 建立後），輸入：</p>
+<pre><code>curl http://localhost:8000/v1/chat/completions \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;model&quot;: &quot;MiniMaxAI/MiniMax-M2.1&quot;,
+    &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello&quot;}]
+  }&#39;</code></pre>
+<p>正常回應會是一段 JSON，包含模型的回覆。</p>
+<hr />
+<h2 id="十四接入-openclaw">十四、接入 OpenClaw</h2>
+<p>SSH tunnel 建立後，在您本機的 OpenClaw
+設定檔（<code>~/.openclaw/openclaw.json</code>）中的
+<code>models.providers</code> 區塊加入：</p>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;nchc&quot;</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;baseUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;http://127.0.0.1:8000/v1&quot;</span><span class="fu">,</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;apiKey&quot;</span><span class="fu">:</span> <span class="st">&quot;dummy&quot;</span><span class="fu">,</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;api&quot;</span><span class="fu">:</span> <span class="st">&quot;openai-completions&quot;</span><span class="fu">,</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;models&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;MiniMaxAI/MiniMax-M2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;MiniMax M2.1 (NCHC)&quot;</span><span class="fu">,</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;reasoning&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;input&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;text&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;cost&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;input&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">&quot;cacheRead&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">&quot;cacheWrite&quot;</span><span class="fu">:</span> <span class="dv">0</span> <span class="fu">},</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;contextWindow&quot;</span><span class="fu">:</span> <span class="dv">196608</span><span class="fu">,</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;maxTokens&quot;</span><span class="fu">:</span> <span class="dv">8192</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p><code>apiKey</code> 設為 <code>"dummy"</code> 是因為自架的 vLLM
+預設不需要認證。<code>baseUrl</code> 指向 localhost 是因為 SSH tunnel
+把遠端的 8000 port 轉到了本機。</p>
+<hr />
+<h2 id="十五按需啟動關閉節省費用">十五、按需啟動/關閉（節省費用）</h2>
+<p>Slurm 任務在執行期間持續計費。如果您不需要 24
+小時都開著，可以用以下腳本實現「用的時候開、不用就關」的模式。</p>
+<h3 id="本機啟動腳本">本機啟動腳本</h3>
+<p>在您的 Mac 上建立一個腳本 <code>nchc-start.sh</code>，每次要用
+MiniMax M2.1 時執行它，它會自動完成：提交 Slurm 任務 → 等待任務啟動 →
+等待 vLLM 就緒 → 建立 SSH tunnel。</p>
+<p>用終端機建立檔案（在本機操作，不是在國網上）：</p>
+<pre><code>nano ~/nchc-start.sh</code></pre>
+<p>貼上以下內容（請將 <code>&lt;主機帳號&gt;</code>
+替換為您的主機帳號）：</p>
+<pre><code>#!/bin/bash
+set -e
+
+NCHC_USER=&quot;&lt;主機帳號&gt;&quot;
+NCHC_HOST=&quot;ln01.twcc.ai&quot;
+WORK_DIR=&quot;/work/${NCHC_USER}&quot;
+JOB_SCRIPT=&quot;${WORK_DIR}/minimax-m2.1.sh&quot;
+LOCAL_PORT=8000
+REMOTE_PORT=8000
+
+echo &quot;=== NCHC MiniMax M2.1 啟動工具 ===&quot;
+echo &quot;&quot;
+echo &quot;[1/4] 提交 Slurm 任務...&quot;
+JOB_ID=$(ssh ${NCHC_USER}@${NCHC_HOST} &quot;sbatch --parsable ${JOB_SCRIPT}&quot;)
+echo &quot;       任務已提交，Job ID: ${JOB_ID}&quot;
+
+echo &quot;[2/4] 等待任務開始執行...&quot;
+while true; do
+  STATUS=$(ssh ${NCHC_USER}@${NCHC_HOST} \
+    &quot;squeue -j ${JOB_ID} -h -o &#39;%T %N&#39; 2&gt;/dev/null || echo GONE&quot;)
+  if echo &quot;${STATUS}&quot; | grep -q &quot;^RUNNING&quot;; then
+    NODE=$(echo &quot;${STATUS}&quot; | awk &#39;{print $2}&#39;)
+    echo &quot;       任務已在 ${NODE} 上執行&quot;
+    break
+  elif echo &quot;${STATUS}&quot; | grep -q &quot;GONE&quot;; then
+    echo &quot;       錯誤：任務已結束或不存在，請檢查 log&quot;
+    exit 1
+  fi
+  echo &quot;       狀態：排隊中... (每 15 秒檢查一次)&quot;
+  sleep 15
+done
+
+echo &quot;[3/4] 等待 vLLM 啟動（模型載入中，請耐心等候）...&quot;
+while true; do
+  READY=$(ssh ${NCHC_USER}@${NCHC_HOST} \
+    &quot;ssh ${NODE} &#39;curl -s http://localhost:${REMOTE_PORT}/v1/models 2&gt;/dev/null&#39; || echo NOT_READY&quot;)
+  if echo &quot;${READY}&quot; | grep -q &#39;&quot;id&quot;&#39;; then
+    echo &quot;       vLLM 已就緒！&quot;
+    break
+  fi
+  echo &quot;       模型仍在載入中... (每 30 秒檢查一次)&quot;
+  sleep 30
+done
+
+echo &quot;[4/4] 建立 SSH Tunnel (localhost:${LOCAL_PORT} -&gt; ${NODE}:${REMOTE_PORT})...&quot;
+echo &quot;&quot;
+echo &quot;=========================================&quot;
+echo &quot;  MiniMax M2.1 已啟動！&quot;
+echo &quot;  API 端點：http://localhost:${LOCAL_PORT}/v1&quot;
+echo &quot;  按 Ctrl+C 可斷開 tunnel（任務仍繼續執行）&quot;
+echo &quot;  用完請執行 ~/nchc-stop.sh 關閉任務以停止計費&quot;
+echo &quot;=========================================&quot;
+echo &quot;&quot;
+
+ssh -N -L ${LOCAL_PORT}:${NODE}:${REMOTE_PORT} ${NCHC_USER}@${NCHC_HOST}</code></pre>
+<p>按 <code>Ctrl + O</code> 儲存，Enter 確認，<code>Ctrl + X</code>
+離開。然後設定為可執行：</p>
+<pre><code>chmod +x ~/nchc-start.sh</code></pre>
+<h3 id="本機關閉腳本">本機關閉腳本</h3>
+<p>用完後執行此腳本來關閉 Slurm 任務，停止計費。</p>
+<pre><code>nano ~/nchc-stop.sh</code></pre>
+<p>貼上以下內容：</p>
+<pre><code>#!/bin/bash
+set -e
+
+NCHC_USER=&quot;&lt;主機帳號&gt;&quot;
+NCHC_HOST=&quot;ln01.twcc.ai&quot;
+
+echo &quot;=== NCHC MiniMax M2.1 關閉工具 ===&quot;
+echo &quot;&quot;
+echo &quot;正在查詢執行中的任務...&quot;
+
+JOBS=$(ssh ${NCHC_USER}@${NCHC_HOST} \
+  &quot;squeue -u ${NCHC_USER} -h -o &#39;%i %j %T %M&#39; 2&gt;/dev/null&quot;)
+
+if [ -z &quot;${JOBS}&quot; ]; then
+  echo &quot;目前沒有執行中的任務，無需關閉。&quot;
+  exit 0
+fi
+
+echo &quot;找到以下任務：&quot;
+echo &quot;&quot;
+echo &quot;JOB_ID      名稱              狀態      已執行時間&quot;
+echo &quot;----------- ----------------- --------- ----------&quot;
+echo &quot;${JOBS}&quot; | while read id name state time; do
+  printf &quot;%-11s %-17s %-9s %s\n&quot; &quot;$id&quot; &quot;$name&quot; &quot;$state&quot; &quot;$time&quot;
+done
+echo &quot;&quot;
+
+read -p &quot;要取消所有任務嗎？(y/N) &quot; CONFIRM
+if [[ &quot;${CONFIRM}&quot; =~ ^[Yy]$ ]]; then
+  echo &quot;${JOBS}&quot; | awk &#39;{print $1}&#39; | while read JOB_ID; do
+    ssh ${NCHC_USER}@${NCHC_HOST} &quot;scancel ${JOB_ID}&quot;
+    echo &quot;已取消任務 ${JOB_ID}&quot;
+  done
+  echo &quot;&quot;
+  echo &quot;所有任務已取消，GPU 計費已停止。&quot;
+else
+  echo &quot;已取消操作，任務繼續執行中。&quot;
+fi</code></pre>
+<p>按 <code>Ctrl + O</code> 儲存，Enter 確認，<code>Ctrl + X</code>
+離開。設定為可執行：</p>
+<pre><code>chmod +x ~/nchc-stop.sh</code></pre>
+<h3 id="使用方式">使用方式</h3>
+<p><strong>要用的時候：</strong></p>
+<p>打開終端機（macOS 按 <code>Cmd + 空白鍵</code>，輸入
+<code>Terminal</code>，按 Enter），輸入：</p>
+<pre><code>~/nchc-start.sh</code></pre>
+<p>腳本會自動完成所有步驟。過程中需要輸入 1~2 次主機密碼和 OTP
+驗證碼。全部完成後，您會看到 API 端點的網址，此時 OpenClaw 就可以使用
+MiniMax M2.1 了。</p>
+<p><strong>用完以後：</strong></p>
+<ol type="1">
+<li>在執行 <code>nchc-start.sh</code> 的終端機視窗按
+<code>Ctrl + C</code> 斷開 SSH tunnel</li>
+<li>開啟新的終端機視窗（或在同一個視窗），輸入：</li>
+</ol>
+<pre><code>~/nchc-stop.sh</code></pre>
+<p>腳本會列出所有執行中的任務，確認後取消它們，GPU 計費就會停止。</p>
+<h3 id="費用對比">費用對比</h3>
+<table>
+<thead>
+<tr>
+<th>使用模式</th>
+<th>每月使用量（4x H100，學界費率）</th>
+<th>月費用（NTD）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>24/7 全天候運行</td>
+<td>2,880 GPU 小時</td>
+<td>144,000</td>
+</tr>
+<tr>
+<td>每天用 8 小時</td>
+<td>960 GPU 小時</td>
+<td>48,000</td>
+</tr>
+<tr>
+<td>每天用 2 小時</td>
+<td>240 GPU 小時</td>
+<td>12,000</td>
+</tr>
+<tr>
+<td>需要時才開，每週用 5 小時</td>
+<td>80 GPU 小時</td>
+<td>4,000</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注意：每次啟動 vLLM 需要載入 220GB
+的模型權重，從提交任務到可以使用，估計需要等待數分鐘（視排隊狀況和模型載入速度）。如果啟動等待時間對您來說可以接受，按需啟動是最省錢的方式。</p>
+</blockquote>
+<hr />
+<h2 id="十六費用估算">十六、費用估算</h2>
+<p>以 4 片 H100、學界計畫費率 50 NTD/GPU 小時為例：</p>
+<table>
+<thead>
+<tr>
+<th>運行時間</th>
+<th>GPU 小時</th>
+<th>費用（NTD）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 小時</td>
+<td>4</td>
+<td>200</td>
+</tr>
+<tr>
+<td>8 小時</td>
+<td>32</td>
+<td>1,600</td>
+</tr>
+<tr>
+<td>24 小時</td>
+<td>96</td>
+<td>4,800</td>
+</tr>
+<tr>
+<td>7 天</td>
+<td>672</td>
+<td>33,600</td>
+</tr>
+<tr>
+<td>30 天</td>
+<td>2,880</td>
+<td>144,000</td>
+</tr>
+</tbody>
+</table>
+<p>8 片 H100 的費用為上表的兩倍。</p>
+<hr />
+<h2 id="十七常見問題">十七、常見問題</h2>
+<table>
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 62%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>原因與解法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>squeue</code> 一直顯示 <code>PD</code></td>
+<td>排隊中，GPU 資源被其他使用者佔用。等待或換時段提交</td>
+</tr>
+<tr>
+<td>CUDA Memory Error</td>
+<td>模型太大，加參數
+<code>--compilation-config "{\"cudagraph_mode\": \"PIECEWISE\"}"</code></td>
+</tr>
+<tr>
+<td>輸出亂碼或格式異常</td>
+<td>vLLM 版本太舊，重新安裝 nightly
+版：<code>uv pip install -U vllm --extra-index-url https://wheels.vllm.ai/nightly</code></td>
+</tr>
+<tr>
+<td>Unsupported Model Error</td>
+<td>vLLM 版本不支援此模型，更新到最新 nightly</td>
+</tr>
+<tr>
+<td>SSH tunnel 中斷</td>
+<td>關閉再重新建立 tunnel，或使用 <code>autossh</code> 自動重連</td>
+</tr>
+<tr>
+<td>連不上 localhost:8000</td>
+<td>確認 (1) 任務仍在運行 (2) SSH tunnel 未中斷 (3) vLLM log
+顯示已啟動</td>
+</tr>
+<tr>
+<td>下載模型時空間不足</td>
+<td>至 iService 申請擴充 <code>/work</code> 容量</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="十八完整操作流程摘要">十八、完整操作流程摘要</h2>
+<p><strong>首次設定（只做一次）：</strong></p>
+<pre><code>1. 註冊 iService 帳號 → iservice.nchc.org.tw
+2. 設定 OTP 裝置
+3. 申請計畫並儲值
+4. 擴充 /work 容量到 300GB 以上
+5. 註冊 HuggingFace 帳號，取得 Access Token
+6. SSH 連線到登入節點 → ssh &lt;主機帳號&gt;@ln01.twcc.ai
+7. 安裝 uv、建立虛擬環境、安裝 vLLM nightly
+8. 登入 HuggingFace，下載 MiniMax M2.1 模型到 /work
+9. 撰寫 Slurm 腳本
+10. 在本機建立 nchc-start.sh 和 nchc-stop.sh
+11. 設定 OpenClaw 的 baseUrl 指向 localhost:8000</code></pre>
+<p><strong>日常使用：</strong></p>
+<pre><code>要用時 → 執行 ~/nchc-start.sh → 等待啟動完成 → 開始使用
+用完後 → Ctrl+C 斷開 tunnel → 執行 ~/nchc-stop.sh → 停止計費</code></pre>
+<hr />
+<h2 id="十九參考資源">十九、參考資源</h2>
+<ul>
+<li><a href="https://man.twcc.ai/@TWCC-III-manual/SypVJCWcO">iService
+註冊指南</a></li>
+<li><a
+href="https://iservice.nchc.org.tw/nchc_service/nchc_service_qa.php?target=16">iService
+計畫申請</a></li>
+<li><a href="https://docs.twcloud.ai/">TWCC 文件中心</a></li>
+<li><a href="https://man.twcc.ai/@TWCC-III-manual/H1Bx15sd_">Slurm
+指令教學</a></li>
+<li><a href="https://docs.twcc.ai/en/docs/user-guides/twcc/hfs/">HFS
+儲存系統</a></li>
+<li><a href="https://man.twcc.ai/@twccdocs/SJWlN3YDr">TWCC 定價</a></li>
+<li><a
+href="https://github.com/MiniMax-AI/MiniMax-M2.1/blob/main/docs/vllm_deploy_guide.md">MiniMax
+M2.1 vLLM 部署指南</a></li>
+<li><a
+href="https://github.com/MiniMax-AI/MiniMax-M2.1/blob/main/docs/sglang_deploy_guide.md">MiniMax
+M2.1 SGLang 部署指南</a></li>
+<li><a href="https://docs.vllm.ai/">vLLM 官方文件</a></li>
+<li><a href="mailto:isupport@narlabs.org.tw">國網中心客服</a> /
+免費電話：0809-091-365</li>
+</ul>
+</body>
+</html>
